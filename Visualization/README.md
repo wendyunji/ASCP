@@ -5,9 +5,9 @@
 3. python OptaVisualizer.py {x축 시간 간격(분)} {디렉토리명} 실행
 ```bash
 # x축 시간 간격: 10분, 
-# 로그 디렉토리 명: 1F1P_GD, RL_GD, 1F1P_HC, RL_HC -> generator_solver 형식 이어야 함.
+# 로그 디렉토리 명: 1F1P_GD, RL_GD, 1F1P_HC, RL_Tabu -> generator_solver 형식 이어야 함.
 # 출력 파일 명: Comparison
-$ python OptaVisualizer.py 10 1F1P_GD RL_GD 1F1P_HC RL_HC Comparison
+$ python OptaVisualizer.py 10 1F1P_GD RL_GD 1F1P_HC RL_Tabu Comparison
 ```
 예시 디렉토리 구조
 ```
@@ -19,6 +19,6 @@ ASCP/
     │   ├── 1F1P_GD/
     │   ├── RL_GD/
     │   ├── 1F1P_HC/
-    │   └── RL_HC/
+    │   └── RL_Tabu/
     └── README.md
 ```

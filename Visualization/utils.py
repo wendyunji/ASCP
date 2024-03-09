@@ -28,7 +28,7 @@ class OptaVisualization:
         # logs의 파일들 이름순 정렬
         logs.sort()
         for log in tqdm(logs):
-            print(log)
+            # print(log)
             with open(os.path.join(logs_path, log), 'r') as f:
                 lines = f.readlines()
                 for line in lines:
@@ -41,7 +41,9 @@ class OptaVisualization:
                             continue
                         if best_score is None or score < best_score:
                             best_score = score
+                            #print('time spent:', time_spent[0], 'best score:', best_score)
                             best_scores.append((int(time_spent[0]), best_score))
+                            
         return best_scores
     
     def get_best_scores_by_grid(self, logs, logs_path):
@@ -49,6 +51,7 @@ class OptaVisualization:
         grid_sec마다의 best score를 저장하기
         """
         best_score_list = self.get_best_scores(logs, logs_path)
+        # print(best_score_list)
         best_score_by_grid = []
         for i in tqdm(range(0, best_score_list[-1][0], self.grid_sec)):
             best_score = None
@@ -61,6 +64,7 @@ class OptaVisualization:
             i = i // 60000
             best_score_by_grid.append((i, best_score))
         best_score_by_grid.pop(0)
+        # print(best_score_by_grid)
         return best_score_by_grid
     
     def get_dir_best_scores(self):
@@ -68,15 +72,23 @@ class OptaVisualization:
         # print(self.logs_path_list)
         # print(self.dir_name_list)
         for i, logs in tqdm(enumerate(self.logs_list)):
+            print('getting best scores...')
+            # print('logs:', logs)
             best_score_list = self.get_best_scores_by_grid(logs, self.logs_path_list[i])
             self.dir_best_scores[self.dir_name_list[i]] = best_score_list
+            #print(self.dir_best_scores)
         return self.dir_best_scores
     
-    def filter_max_time(self):
+    def filter_min_time(self):
         # 시간이 가장 짧은 그래프의 길이에 맞춰서 다른 그래프의 길이를 맞추기
-        min_len = min([len(best_score_list) for best_score_list in self.dir_best_scores.values()])
+        max_len = max([len(best_score_list) for best_score_list in self.dir_best_scores.values()])
         for dir_name, best_score_list in tqdm(self.dir_best_scores.items()):
-            self.dir_best_scores[dir_name] = best_score_list[:min_len]
+            print('filtering max time...')
+            if len(best_score_list) < max_len:
+                self.dir_best_scores[dir_name] = best_score_list + [best_score_list[-1]] * (max_len - len(best_score_list))
+            else:   
+                self.dir_best_scores[dir_name] = best_score_list[:max_len]
+            
         return self.dir_best_scores
     
     def export_graph_table(self):
@@ -91,7 +103,8 @@ class OptaVisualization:
         print('exporting graph and table...')
         
         self.get_dir_best_scores()
-        self.filter_max_time()
+        self.filter_min_time()
+        # print(self.dir_best_scores)
         plt.figure(figsize=(20, 10))
         # 여백 최대한 없애기
         plt.tight_layout()
@@ -113,32 +126,33 @@ class OptaVisualization:
         solver_list = list(set(solver_list))
         
         # generator : RL->'-', 1F1P->'--', KBRA->'-.', else->':'
-        generator_line_style = {}
+        generator_color = {}
         for i, generator in enumerate(generator_list):
             if generator == 'RL':
-                generator_line_style[generator] = '-'
+                generator_color[generator] = 'r'
             elif generator == '1F1P':
-                generator_line_style[generator] = '--'
+                generator_color[generator] = 'g'
             elif generator == 'KBRA':
-                generator_line_style[generator] = '-.'
+                generator_color[generator] = 'b'
             else:
-                generator_line_style[generator] = ':'
+                generator_color[generator] = 'b'
+                
         
         # solver : GD ->'r', HC->'g', Tabu->'b'
-        solver_color = {}
+        solver_line_style = {}
         for i, solver in enumerate(solver_list):
-            if solver == 'GD':
-                solver_color[solver] = 'r'
-            elif solver == 'HC':
-                solver_color[solver] = 'g'
+            if solver == 'GreatDeluge':
+                solver_line_style[solver] = '-'
+            elif solver == 'HillClimbing':
+                solver_line_style[solver] = '--'
             else:
-                solver_color[solver] = 'b'
+                solver_line_style[solver] = '-.'
         
         # 그래프 그리기
         for i, (dir_name, best_score_list) in enumerate(self.dir_best_scores.items()):
             generator, solver = dir_name.split('_')
-            line_style = generator_line_style[generator]
-            color = solver_color[solver]
+            line_style = solver_line_style[solver]
+            color = generator_color[generator]
             plt.plot([score for time, score in best_score_list], label=dir_name, linestyle=line_style, color=color)
             table[dir_name] = [score for time, score in best_score_list]
         
@@ -146,8 +160,12 @@ class OptaVisualization:
         table.to_csv(f'{self.filename}.csv')
         # 글씨 겹치지 않게 크기 조절
         plt.xticks(range(len(best_score_list)), [file for file, _ in best_score_list], rotation=60, fontsize=15)
-        plt.legend()
-        
+        plt.yticks(fontsize=15)
+        plt.legend(fontsize=20)
+        plt.xlabel('Time(min)', fontsize=20)
+        plt.ylabel('Optimization Cost Score', fontsize=20)
+        #plt.ylabel('Optimization Cost Score', fontsize=25)
+        #plt.title(f'{self.filename} Dataset Optimization Cost Score', fontsize=30)
         # # 그래프가 꺾이는 부분(점수가 달라지는 부분)에 점 표시 및 점수, 날짜 출력, 모든 그래프에 적용
         # for dir_name, best_score_list in self.dir_best_scores.items():
         #     for i, (time, score) in enumerate(best_score_list):
