@@ -53,7 +53,12 @@ class OptaVisualization:
         best_score_list = self.get_best_scores(logs, logs_path)
         # print(best_score_list)
         best_score_by_grid = []
-        for i in tqdm(range(0, best_score_list[-1][0], self.grid_sec)):
+
+        # print(best_score_list)
+        # 제일 첫번째 시간은 0으로 만들고 값은 제일 첫번째 입력값으로 만들기
+        best_score_by_grid.append((0, best_score_list[0][1]))
+
+        for i in tqdm(range(1, best_score_list[-1][0], self.grid_sec)):
             best_score = None
             for time, score in best_score_list:
                 if time <= i:
@@ -63,8 +68,8 @@ class OptaVisualization:
             # 시간을 다시 분으로 바꾸기
             i = i // 60000
             best_score_by_grid.append((i, best_score))
-        best_score_by_grid.pop(0)
-        # print(best_score_by_grid)
+        best_score_by_grid.pop(1)
+        print(best_score_by_grid)
         return best_score_by_grid
     
     def get_dir_best_scores(self):
@@ -117,55 +122,76 @@ class OptaVisualization:
         generator_list = []
         solver_list = []
         for dir_name in self.dir_best_scores.keys():
-            generator, solver = dir_name.split('_')
+            # generator, solver = dir_name.split('_')
+            generator = dir_name
+            # solver = dir_name
             generator_list.append(generator)
-            solver_list.append(solver)
+            # solver_list.append(solver)
             
         # generator와 solver 중복 제거
         generator_list = list(set(generator_list))
         solver_list = list(set(solver_list))
+        
+        solver_line_style = {}
         
         # generator : RL->'-', 1F1P->'--', KBRA->'-.', else->':'
         generator_color = {}
         for i, generator in enumerate(generator_list):
             if generator == 'RL':
                 generator_color[generator] = 'r'
-            elif generator == '1F1P':
+                solver_line_style[generator] = '-'
+            elif generator == 'OptaPlanner':
                 generator_color[generator] = 'g'
+                solver_line_style[generator] = '--'
             elif generator == 'KBRA':
                 generator_color[generator] = 'b'
+                solver_line_style[generator] = '--'
             else:
                 generator_color[generator] = 'b'
-                
+            
+        print(generator_color)
+        print(solver_line_style)
         
         # solver : GD ->'r', HC->'g', Tabu->'b'
-        solver_line_style = {}
-        for i, solver in enumerate(solver_list):
-            if solver == 'GreatDeluge':
-                solver_line_style[solver] = '-'
-            elif solver == 'HillClimbing':
-                solver_line_style[solver] = '--'
-            else:
-                solver_line_style[solver] = '-.'
+        # solver_line_style = {}
+        # for i, solver in enumerate(solver_list):
+        #     if solver == 'GreatDeluge':
+        #         generator_color[solver] = 'r'
+        #         solver_line_style[solver] = '-'
+        #     elif solver == 'HillClimbing':
+        #         generator_color[solver] = 'g'
+        #         solver_line_style[solver] = '--'
+        #     else:
+        #         generator_color[solver] = 'b'
+        #         solver_line_style[solver] = '--'
         
         # 그래프 그리기
         for i, (dir_name, best_score_list) in enumerate(self.dir_best_scores.items()):
-            generator, solver = dir_name.split('_')
-            line_style = solver_line_style[solver]
+            print(best_score_list)
+            # generator, solver = dir_name.split('_')
+            generator = dir_name
+            # generator = dir_name
+            print(generator_color)
+            print(solver_line_style)
+            line_style = solver_line_style[generator]
             color = generator_color[generator]
-            plt.plot([score for time, score in best_score_list], label=dir_name, linestyle=line_style, color=color)
+            if dir_name == 'RL':
+                label = 'With RL Great Deluge'
+            else:
+                label = 'With OPIS Great Deluge'
+            plt.plot([score for time, score in best_score_list], label=label, linestyle=line_style, color=color)
             table[dir_name] = [score for time, score in best_score_list]
         
         table.index = [time for time, _ in best_score_list]
-        table.to_csv(f'{self.filename}.csv')
+        table.to_csv(f'{self.filename} RL vs Without RL using Great Deluge Algorithm.csv')
         # 글씨 겹치지 않게 크기 조절
         plt.xticks(range(len(best_score_list)), [file for file, _ in best_score_list], rotation=60, fontsize=15)
         plt.yticks(fontsize=15)
         plt.legend(fontsize=20)
         plt.xlabel('Time(min)', fontsize=20)
-        plt.ylabel('Optimization Cost Score', fontsize=20)
+        plt.ylabel('Score', fontsize=20)
         #plt.ylabel('Optimization Cost Score', fontsize=25)
-        #plt.title(f'{self.filename} Dataset Optimization Cost Score', fontsize=30)
+        plt.title(f'{self.filename} RL vs Without RL using Great Deluge Algorithm', fontsize=30)
         # # 그래프가 꺾이는 부분(점수가 달라지는 부분)에 점 표시 및 점수, 날짜 출력, 모든 그래프에 적용
         # for dir_name, best_score_list in self.dir_best_scores.items():
         #     for i, (time, score) in enumerate(best_score_list):
