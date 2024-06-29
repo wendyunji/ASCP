@@ -8,7 +8,7 @@ from torch.optim import lr_scheduler
 import numpy as np
 from torch.distributions import Categorical
 from embedData import *
-from functions import *
+from utils import checkConnection, get_reward, update_state
 from CrewPairingEnv import CrewPairingEnv
 import random
 import openpyxl
@@ -129,7 +129,6 @@ def main():
             
             while not done:
                 a = q.sample_action(torch.from_numpy(np.array(s)).float(), epsilon)
-
                 s_prime, r, done, truncated, info, output_tmp = env.step(action=a)
 
                 done_mask = 0.0 if done else 1.0
@@ -153,7 +152,8 @@ def main():
             score = 0
 
     env.close()
-    print_xlsx(output)
+    output_pairing_filename = os.path.join(output_directory, f'output_pairing_{month}.csv')
+    print_xlsx(output, output_pairing_filename)
     
 if __name__ == '__main__':
     main()

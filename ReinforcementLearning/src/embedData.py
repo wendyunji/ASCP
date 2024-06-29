@@ -237,7 +237,7 @@ def stratifiedSampling(data, interval):
     print(sampled_data)
     return sampled_data
 
-def print_xlsx(output):
+def print_xlsx(output, output_pairing_filename):
     workbook = openpyxl.Workbook()
     sheet = workbook.active
 
@@ -253,7 +253,7 @@ def print_xlsx(output):
         for col_index, value in enumerate(row_data, start=2):  # 각 행의 두 번째 열부터 시작
             sheet.cell(row=row_index, column=col_index, value=value)
 
-    workbook.save("output.xlsx")
+    workbook.save(output_pairing_filename)
     
 def print_xlsx_tmp(n_epi,number,output_tmp,folder_path):
     if n_epi%number==0:
