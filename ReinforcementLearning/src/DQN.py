@@ -20,6 +20,8 @@ learning_rate = 0.005
 gamma = 0.98
 buffer_limit = 50000
 batch_size = 32
+INF = 999999999999999
+
 
 class ReplayBuffer():
     def __init__(self):
@@ -100,6 +102,7 @@ def main():
 
     # Load Crew Pairing Environment
     N_flight = len(flight_list)
+    print("Number of Flights :", N_flight)
     env = CrewPairingEnv(V_f_list, flight_list)
     q = Qnet(NN_size)
 
@@ -109,11 +112,11 @@ def main():
 
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
-    score = 0
-    best_score = 0
+    score = -INF
+    best_score = -INF
     output = [[] for i in range(N_flight)]
 
-    output_filename = os.path.join(output_directory, f'episode_rewards_{month}.csv')
+    output_filename = os.path.join(output_directory, f'episode_rewards_{month}_{episodes}.csv')
     with open(output_filename, 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(["Episode", "Reward", "Best Score", "Time Elapsed"])
@@ -144,7 +147,8 @@ def main():
                 best_score = score
                 output = output_tmp
                 train(q, q_target, memory, optimizer)
-                torch.save(q.state_dict(), os.path.join(output_directory, f'dqn_modelB6_{month}.pth'))
+                torch.save(q.state_dict(), os.path.join(output_directory, f'dqn_model_{month}_{episodes}.pth'))
+                print(os.path.join(output_directory, f'dqn_model_{month}.pth'))
             
             csvwriter.writerow([n_epi, f"{score:.2f}", f"{best_score:.2f}", f"{datetime.now() - time}"])
             print(f"Current Score: {score:.2f}, Best Score: {best_score:.2f}")
@@ -152,7 +156,7 @@ def main():
             score = 0
 
     env.close()
-    output_pairing_filename = os.path.join(output_directory, f'output_pairing_{month}.csv')
+    output_pairing_filename = os.path.join(output_directory, f'output_pairing_{month}_{episodes}.csv')
     print_xlsx(output, output_pairing_filename)
     
 if __name__ == '__main__':
