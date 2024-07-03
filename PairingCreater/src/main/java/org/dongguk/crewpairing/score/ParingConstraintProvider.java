@@ -90,14 +90,14 @@ public class ParingConstraintProvider implements ConstraintProvider {
 
     private Constraint pairLengthPossible(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
-                .filter(pairing -> pairing.getTotalLength() > 4)
+                .filter(Pairing::isLenghtPossible)
                 .penalize(HardSoftLongScore.ofHard(1000))
                 .asConstraint("length possible");
     }
 
     private Constraint activeTimeCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
-                .penalize(HardSoftLongScore.ONE_SOFT, pairing -> pairing.getTotalLength() *2)
+                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getActiveTimeCost)
                 .asConstraint("length cost");
     }
 

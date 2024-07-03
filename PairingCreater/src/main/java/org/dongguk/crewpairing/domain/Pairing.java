@@ -70,6 +70,8 @@ public class Pairing extends AbstractPersistable {
      * @return boolean
      */
     public boolean isNotDepartBase(){
+        if (pair.size() == 0) return false;
+
         String originAirport = pair.get(0).getOriginAirport().getName();
         if(!originAirport.equals("HB1") && !originAirport.equals("HB2")) return true;
 
@@ -171,8 +173,18 @@ public class Pairing extends AbstractPersistable {
      * 페어링의 총 갈아 반환 (일)
      * @return 마지막 비행 도착시간 - 처음 비행 시작시간
      */
-    public Integer getTotalLength() {
-        return (int) ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime());
+    public Integer getActiveTimeCost() {
+        if (pair.size() == 0) return 0;
+
+        return Math.max(0, 2* (int) ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()));
+    }
+
+    public Boolean isLenghtPossible(){
+        if (pair.size() <= 1) return false;
+
+        if (ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()) > 4)
+            return true;
+        else return false;
     }
 
     /**

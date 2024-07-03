@@ -45,6 +45,11 @@ public class PairingApp extends CommonApp<PairingSolution> {
                     .filter(outputFile -> outputFile.getName().equals(pairingXlsxFile))
                     .findFirst().orElseGet(() -> null));
             business.getSolution().setPairingList(pairingList);
+
+            System.out.println(flightList);
+            for(Flight f : flightList){
+                System.out.println(f);
+            }
         }
 
         // Solve By SolverJob
