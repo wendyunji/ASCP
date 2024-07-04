@@ -89,7 +89,7 @@ def main():
     # 사용자로부터 실행할 데이터의 년월일, 에피소드 수, 실행 ID 입력 받기
     month = input("Enter the month of the input file (e.g., 201406): ")
     episodes = int(input("Enter the number of episodes to run: "))
-    excutionId = input("Enter the excution ID (eg., 20240704-1)")
+    excutionId = input("Enter the excution ID (eg., 20240704-1): ")
 
     current_directory = os.path.dirname(__file__)
     
@@ -173,8 +173,8 @@ def main():
 
     env.close()
     
-    # 최종 생성된 페어링을 csv로 ouput 디렉토리에 저장
-    print_xlsx(output, os.path.join(output_directory, f'output_pairing_{month}_{episodes}_{excutionId}.csv'))
+    # 최종 생성된 페어링을 xlsx로 ouput 디렉토리에 저장
+    print_xlsx(output, os.path.join(output_directory, f'output_pairing_{month}_{episodes}_{excutionId}.xlsx'))
     
 if __name__ == '__main__':
     main()

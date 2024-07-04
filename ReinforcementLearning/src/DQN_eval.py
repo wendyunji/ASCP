@@ -80,7 +80,7 @@ def main():
     # 사용자로부터 실행할 데이터의 년월일, 실행 ID 입력 받기
     month = input("Enter the month of the input file (e.g., 201406): ")
     episodes = int(input("Enter the number of saved model's episodes: "))
-    excutionId = input("Enter the excution ID of saved model (eg., 20240704-1)")
+    excutionId = input("Enter the excution ID of saved model (eg., 20240704-1): ")
     
     current_directory = os.path.dirname(__file__)
     
@@ -129,8 +129,8 @@ def main():
 
     env.close()
     
-    # 훈련된 모델로 생성된 eval 페어링을 csv로 eval 디렉토리에 저장
-    print_xlsx(output, os.path.join(eval_directory, f'eval_pairing_{month}_{episodes}_{excutionId}.csv'))
+    # 훈련된 모델로 생성된 eval 페어링을 xlsx로 eval 디렉토리에 저장
+    print_xlsx(output, os.path.join(eval_directory, f'eval_pairing_{month}_{episodes}_{excutionId}.xlsx'))
     
 if __name__ == '__main__':
     main()
