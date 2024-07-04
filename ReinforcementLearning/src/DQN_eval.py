@@ -77,18 +77,35 @@ def train(q, q_target, memory, optimizer):
         optimizer.step()
 
 def main():
+    # 사용자로부터 실행할 데이터의 년월일, 실행 ID 입력 받기
+    month = input("Enter the month of the input file (e.g., 201406): ")
+    episodes = int(input("Enter the number of saved model's episodes: "))
+    excutionId = input("Enter the excution ID of saved model (eg., 20240704-1)")
+    
     current_directory = os.path.dirname(__file__)
+    
+    # 요구 디렉토리
+    models_directory = os.path.join(current_directory, '../models')
+    eval_directory = os.path.join(current_directory, '../eval')
+    # 디렉토리가 없으면 만들기
+    if not os.path.exists(eval_directory):
+        os.makedirs(eval_directory)
+    
+    # 데이터 입력 받기
     path = os.path.abspath(os.path.join(current_directory, '../input'))
-    readXlsx(path, '/ASCP_Input_201406.xlsx')
+    readXlsx(path, f'/ASCP_Data_Input_{month}.xlsx')
 
+    # 데이터 임베딩
     flight_list, V_f_list, NN_size = embedFlightData(path)
     print('Data Imported')
 
-    # Crew Pairing Environment 불러오기
+    # Load Crew Pairing Environment
     N_flight = len(flight_list)
     env = CrewPairingEnv(V_f_list, flight_list)
     q = Qnet(NN_size)
-    loaded_model = torch.load('/home/ascp_opta_5/ASCP/ReinforcementLearning/output/dqn_model_201406_1000.pth')
+    
+    # eval에 사용할 저장된 모델 불러오기
+    loaded_model = torch.load(os.path.join(models_directory, f'dqn_model_{month}_{episodes}_{excutionId}.pth'))
     q.load_state_dict(loaded_model)
     q.eval()
 
@@ -111,7 +128,9 @@ def main():
     print(f"score : {score:.2f}")
 
     env.close()
-    print_xlsx(output,'test2_201406.xlsx')
+    
+    # 훈련된 모델로 생성된 eval 페어링을 csv로 eval 디렉토리에 저장
+    print_xlsx(output, os.path.join(eval_directory, f'eval_pairing_{month}_{episodes}_{excutionId}.csv'))
     
 if __name__ == '__main__':
     main()

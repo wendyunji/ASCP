@@ -86,18 +86,32 @@ def train(q, q_target, memory, optimizer):
         optimizer.step()
 
 def main():
+    # 사용자로부터 실행할 데이터의 년월일, 에피소드 수, 실행 ID 입력 받기
     month = input("Enter the month of the input file (e.g., 201406): ")
     episodes = int(input("Enter the number of episodes to run: "))
+    excutionId = input("Enter the excution ID (eg., 20240704-1)")
 
     current_directory = os.path.dirname(__file__)
+    
+    # 요구 디렉토리
     output_directory = os.path.join(current_directory, '../output')
+    logs_directory = os.path.join(current_directory, '../logs')
+    models_directory = os.path.join(current_directory, '../models')
+    # 디렉토리가 없으면 만들기
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
+    if not os.path.exists(logs_directory):
+        os.makedirs(logs_directory)
+    if not os.path.exists(models_directory):
+        os.makedirs(models_directory)
 
+    # 데이터 입력 받기
     path = os.path.abspath(os.path.join(current_directory, '../input'))
     readXlsx(path, f'/ASCP_Data_Input_{month}.xlsx')
 
+    # 데이터 임베딩
     flight_list, V_f_list, NN_size = embedFlightData(path)
+    print('Data Imported')
     #flight_list, V_f_list, NN_size = embedFlightData_Stratified(path)
 
     # Load Crew Pairing Environment
@@ -116,8 +130,9 @@ def main():
     best_score = -INF
     output = [[] for i in range(N_flight)]
 
-    output_filename = os.path.join(output_directory, f'episode_rewards_{month}_{episodes}.csv')
-    with open(output_filename, 'w', newline='') as csvfile:
+    # 에피소드 별 리워드와 소요 시간을 기록하는 로그 파일(csv)을 logs에 저장
+    logs_filename = os.path.join(logs_directory, f'episode_rewards_{month}_{episodes}_{excutionId}.csv')
+    with open(logs_filename, 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(["Episode", "Reward", "Best Score", "Time Elapsed"])
         csvwriter.writerow(["------------------------------------------"])
@@ -147,8 +162,9 @@ def main():
                 best_score = score
                 output = output_tmp
                 train(q, q_target, memory, optimizer)
-                torch.save(q.state_dict(), os.path.join(output_directory, f'dqn_model_{month}_{episodes}.pth'))
-                print(os.path.join(output_directory, f'dqn_model_{month}.pth'))
+                # Best Model이 갱신될 때 마다 models 디렉토리에 저장
+                torch.save(q.state_dict(), os.path.join(models_directory, f'dqn_model_{month}_{episodes}_{excutionId}.pth'))
+                print('Model Saved')
                 
             csvwriter.writerow([n_epi, f"{score:.2f}", f"{best_score:.2f}", f"{datetime.now() - time}"])
             print(f"Current Score: {score:.2f}, Best Score: {best_score:.2f}")
@@ -156,8 +172,9 @@ def main():
             score = 0
 
     env.close()
-    output_pairing_filename = os.path.join(output_directory, f'output_pairing_{month}_{episodes}.csv')
-    print_xlsx(output, output_pairing_filename)
+    
+    # 최종 생성된 페어링을 csv로 ouput 디렉토리에 저장
+    print_xlsx(output, os.path.join(output_directory, f'output_pairing_{month}_{episodes}_{excutionId}.csv'))
     
 if __name__ == '__main__':
     main()
