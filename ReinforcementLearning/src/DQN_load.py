@@ -8,7 +8,7 @@ from torch.optim import lr_scheduler
 import numpy as np
 from torch.distributions import Categorical
 from embedData import *
-from functions import *
+from utils import *
 from CrewPairingEnv import CrewPairingEnv
 import random
 import openpyxl
@@ -78,16 +78,17 @@ def train(q, q_target, memory, optimizer):
 
 def main():
     current_directory = os.path.dirname(__file__)
-    path = os.path.abspath(os.path.join(current_directory, '../dataset'))
-    readXlsx(path, '/input_201801B6.xlsx')
+    path = os.path.abspath(os.path.join(current_directory, '../input'))
+    readXlsx(path, '/ASCP_Input_201406.xlsx')
 
     flight_list, V_f_list, NN_size = embedFlightData(path)
+    print('Data Imported')
 
     # Crew Pairing Environment 불러오기
     N_flight = len(flight_list)
     env = CrewPairingEnv(V_f_list, flight_list)
     q = Qnet(NN_size)
-    loaded_model = torch.load('dqn_modelB6.pth')
+    loaded_model = torch.load('/home/ascp_opta_5/ASCP/ReinforcementLearning/output/dqn_model_201406_1000.pth')
     q.load_state_dict(loaded_model)
     q.eval()
 
@@ -110,7 +111,7 @@ def main():
     print(f"score : {score:.2f}")
 
     env.close()
-    #print_xlsx(output)
+    print_xlsx(output,'test2_201406.xlsx')
     
 if __name__ == '__main__':
     main()

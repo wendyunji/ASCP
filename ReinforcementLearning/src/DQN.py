@@ -149,7 +149,7 @@ def main():
                 train(q, q_target, memory, optimizer)
                 torch.save(q.state_dict(), os.path.join(output_directory, f'dqn_model_{month}_{episodes}.pth'))
                 print(os.path.join(output_directory, f'dqn_model_{month}.pth'))
-            
+                
             csvwriter.writerow([n_epi, f"{score:.2f}", f"{best_score:.2f}", f"{datetime.now() - time}"])
             print(f"Current Score: {score:.2f}, Best Score: {best_score:.2f}")
                 

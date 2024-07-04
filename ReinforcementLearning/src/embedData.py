@@ -106,8 +106,8 @@ def embedFlightData(path): # flight 객체 생성 및 vector로 변환, flight_l
                 aircraft_onehot[i] = 1
         cdf.at[idx, 'AIRCRAFT'] = aircraft_onehot
         Aircraft.add_type(row['AIRCRAFT'], row['CREW_NUM(명)'], int(float(row['Layover Cost(원/분)'])), int(float(row['Quick Turn Cost(원/회)'])))
-    temp=tuple([0 for _ in range(len(aircraft_total))])
-    del Aircraft.dic[temp]
+#    temp=tuple([0 for _ in range(len(aircraft_total))])
+#    del Aircraft.dic[temp]
     
     
     hdf=pd.read_csv(path+'/User_Hotel.csv')
