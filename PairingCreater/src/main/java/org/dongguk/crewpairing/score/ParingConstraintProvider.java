@@ -22,12 +22,26 @@ public class ParingConstraintProvider implements ConstraintProvider {
                 aircraftPossible(constraintFactory),
                 continuityPossible(constraintFactory),
                 pairLengthPossible(constraintFactory),
+                departBase(constraintFactory),
                 deadHeadCost(constraintFactory),
-                layoverCost(constraintFactory),
-                quickTurnCost(constraintFactory),
-                hotelCost(constraintFactory),
-                satisCost(constraintFactory),
+                activeTimeCost(constraintFactory)
+                
+                //layoverCost(constraintFactory),
+                //quickTurnCost(constraintFactory),
+                //hotelCost(constraintFactory),
+                //satisCost(constraintFactory),
         };
+    }
+    /**
+     * HARD
+     * 모기지에서 출발하는지 확인(Depart base):
+     * Depart Base 어긴 제약 -> 하드스코어 부여(1000)
+     */
+    private Constraint departBase(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Pairing.class)
+                .filter(Pairing::isNotDepartBase)
+                .penalize(HardSoftLongScore.ofHard(1000))
+                .asConstraint("Depart base");
     }
 
     /**
@@ -76,10 +90,15 @@ public class ParingConstraintProvider implements ConstraintProvider {
 
     private Constraint pairLengthPossible(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
-                .filter(pairing -> pairing.getPair().size() >= 2)
-                .filter(Pairing::isImpossiblePairLength)
+                .filter(Pairing::isLenghtPossible)
                 .penalize(HardSoftLongScore.ofHard(1000))
                 .asConstraint("length possible");
+    }
+
+    private Constraint activeTimeCost(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Pairing.class)
+                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getActiveTimeCost)
+                .asConstraint("length cost");
     }
 
     /**
@@ -91,7 +110,8 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint deadHeadCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 1 && pairing.isEqualBase()))
-                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getDeadHeadCost)
+                //.penalize(HardSoftLongScore.ONE_SOFT, Pairing::getDeadHeadCost)
+                .penalize(HardSoftLongScore.ofSoft(8))
                 .asConstraint("Base diff");
     }
 

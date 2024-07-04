@@ -27,7 +27,7 @@ public class Pairing extends AbstractPersistable {
     private static int restTime;
     private static int LayoverTime;
     private static int QuickTurnaroundTime;
-    private static int checkContinueTime = 60 * 10;
+    private static int checkContinueTime = 60 * 4;
     private static int continueMaxTime = 14 * 60;
     private static int workMaxTime = 8 * 60;
 
@@ -65,6 +65,20 @@ public class Pairing extends AbstractPersistable {
     }
 
     /**
+     *  페어링 모기지 출발 여부 확인
+     *  첫번째 Flight의 출발 공항이 HB1, HB2 둘 다 아니면 True 반환
+     * @return boolean
+     */
+    public boolean isNotDepartBase(){
+        if (pair.size() == 0) return false;
+
+        String originAirport = pair.get(0).getOriginAirport().getName();
+        if(!originAirport.equals("HB1") && !originAirport.equals("HB2")) return true;
+
+        return false;
+    }
+
+    /**
      * 동일 공항 출발 여부 확인
      * / 도착 공항과 출발 공항이 다를 시 true 반환
      * @return boolean
@@ -79,30 +93,32 @@ public class Pairing extends AbstractPersistable {
         return false;
     }
 
-    public boolean isImpossiblePairLength(){
-        return ChronoUnit.MINUTES.between(pair.get(0).getOriginTime(), pair.get(pair.size()-1).getDestTime()) > 7 * 24 * 60;
-    }
-
     /**
      * 페어링의 최소 휴식시간 보장 여부 검증
-     * / 연속되는 비행이 14시간 이상일 시 true 반환(연속: breakTime이 10시간 이하)
+     * / 쉬는 시간 포함  한 duty가 14시간 이상일 시 true 반환
      * / 또는 순수 비행 시간의 합이 8시간 이상일 시 true 반환
      * @return boolean
      */
     public boolean isImpossibleContinuity(){
         int totalTime = pair.get(0).getFlightTime();
+        int workTime = pair.get(0).getFlightTime();
 
         for(int i=1; i<pair.size(); i++){
             int flightTime = pair.get(i).getFlightTime();
             int flightGap = getFlightGap(i - 1);
 
+            if(flightGap < QuickTurnaroundTime) return true;
+
             if(flightGap < checkContinueTime) {
                 totalTime += flightTime + flightGap;
+                workTime += flightTime;
             }
             else {
                 totalTime = flightTime;
+                workTime = flightTime;
             }
             if(totalTime > continueMaxTime) return true;
+            if(workTime > workMaxTime) return true;
         }
         return false;
     }
@@ -157,8 +173,18 @@ public class Pairing extends AbstractPersistable {
      * 페어링의 총 갈아 반환 (일)
      * @return 마지막 비행 도착시간 - 처음 비행 시작시간
      */
-    public long getTotalLength() {
-        return ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime());
+    public Integer getActiveTimeCost() {
+        if (pair.size() == 0) return 0;
+
+        return Math.max(0, 2* (int) ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()));
+    }
+
+    public Boolean isLenghtPossible(){
+        if (pair.size() <= 1) return false;
+
+        if (ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()) > 4)
+            return true;
+        else return false;
     }
 
     /**
