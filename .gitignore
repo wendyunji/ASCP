@@ -2,6 +2,10 @@ Visualization/*logs/
 *__pycache__*
 
 Pai
+
+### dataset ###
 *.csv
 *.legs
 *.xlsx
+*.legs
+*.txt
