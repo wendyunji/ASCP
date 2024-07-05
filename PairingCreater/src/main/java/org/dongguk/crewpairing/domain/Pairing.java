@@ -170,15 +170,19 @@ public class Pairing extends AbstractPersistable {
     }
 
     /**
-     * 페어링의 총 갈아 반환 (일)
+     * 페어링의 총 길아 반환 (일)
      * @return 마지막 비행 도착시간 - 처음 비행 시작시간
      */
     public Integer getActiveTimeCost() {
         if (pair.size() == 0) return 0;
 
-        return Math.max(0, 2* (int) ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()));
+        return Math.max(0, (int) ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()));
     }
 
+    /**
+     * 페어링이 4일을 넘는 지 반환 (Boolean)
+     * @return 4일을 넘으면 true, 아니면 false
+     */
     public Boolean isLenghtPossible(){
         if (pair.size() <= 1) return false;
 
