@@ -1,9 +1,7 @@
-# dataset
-dataset
-output
-*.txt
+### dataset ###
+*.csv
+*.xlsx
 
 # pyenv
 *.env
-
 *__pycache__/

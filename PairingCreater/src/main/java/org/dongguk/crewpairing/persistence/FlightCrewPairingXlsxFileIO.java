@@ -272,9 +272,25 @@ public class FlightCrewPairingXlsxFileIO extends AbstractXlsxSolutionFileIO<Pair
             @Override
             public void write() {
                 String timeStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss"));
-//                exportPairingData(timeStr);
-//                exportUserData(timeStr);
-                exportUserData2(timeStr);
+                
+                Scanner scanner = new Scanner(System.in);
+                System.out.print("Enter export type (p for PairingData, u1 for UserData, u2 for UserData2): ");
+                String exportType = scanner.nextLine().trim();
+
+                switch (exportType) {
+                    case "p":
+                        exportPairingData(timeStr);
+                        break;
+                    case "u1":
+                        exportUserData(timeStr);
+                        break;
+                    case "u2":
+                        exportUserData2(timeStr);
+                        break;
+                    default:
+                        System.out.println("Invalid input. Please enter 'p', 'u1', or 'u2'.");
+                }
+                scanner.close();
             }
 
             private void exportPairingData(String timeStr) {

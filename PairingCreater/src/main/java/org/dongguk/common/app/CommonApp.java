@@ -10,6 +10,7 @@ import org.optaplanner.persistence.common.api.domain.solution.SolutionFileIO;
 
 import java.awt.*;
 import java.io.File;
+import java.util.Scanner;
 
 @Getter
 @Setter
@@ -61,12 +62,17 @@ public abstract class CommonApp<Solution_> extends LoggingMain {
     }
 
     private SolutionBusiness<Solution_, ?> createSolutionBusiness(Integer flightSize) {
+        // 터미널에서 사용자 입력을 받아서 초 제한 설정
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the seconds spent limit in seconds: ");
+        long secondsSpentLimit = scanner.nextLong();
+
         // SolverConfig.xml을 읽어서 SolverConfig 객체를 생성 및 종료 조건 설정
         SolverConfig solverConfig = SolverConfig.createFromXmlResource(solverConfigResource);
         solverConfig.withMoveThreadCount("1");
         solverConfig.withTerminationConfig(
                 new TerminationConfig()
-                        .withSecondsSpentLimit(10L));
+                        .withSecondsSpentLimit(secondsSpentLimit*1L));
                         //.withUnimprovedSecondsSpentLimit((long) (8.0 * Math.max(1.0, Math.log10(flightSize))))
                         //.withSecondsSpentLimit((long) (45.0 * Math.max(1.0, Math.log10(flightSize)))));
 
