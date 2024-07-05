@@ -2,6 +2,7 @@
 ## 목차
 1. [Flight 데이터 수집 과정](#🛬Flight-데이터-수집-과정)
 2. [Flighet 데이터 Generator 사용 방법](#)
+3. [Tdataset 사용법]()
 ---
 ## 🛬Flight 데이터 수집 과정
 ### 💺출도착 데이터
@@ -109,4 +110,16 @@ DataAnalyze
 #############    데이터 저장이 완료되었습니다   #############
 flight 데이터 요약 정보가 /home/public/yunairline/ASCP/DataAnalyze/dataset/flightdata/output/2023-08-19 10:28:21_flight_data_summary.txt 에 저장되었습니다.
 flight 데이터 csv가 /home/public/yunairline/ASCP/DataAnalyze/dataset/flightdata/output/2023-08-19 10:28:21_flight_data.csv 에 저장되었습니다.
+```
+
+## Tdataset 사용법
+1. `DataFilter.py` 실행시 raw 파일에 대한 조합별 `filtered_flights_{month}_{combination}.csv` 파일 `format` 디렉토리에 생성
+```
+Enter month (e.g., 01 for January):
+Enter target sum:
+```
+2. `Deadhead.py` 실행시 `filtered_flights` 파일에 대한 deadhead 조합 파일 `deadhead` 디렉토리에 생성
+```
+Enter the month (e.g., 06):
+Combinations saved to ASCP/Dataset/Tdataset/deadhead/deadhead(airport_combinations)_03.csv
 ```

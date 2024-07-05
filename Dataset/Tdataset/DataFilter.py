@@ -46,7 +46,7 @@ def process_flight_data(file_path, target_sum):
         output_data.columns = ['ORIGIN', 'ORIGIN_DATE', 'DEST', 'DEST_DATE', 'AIRCRAFT_TYPE']
         results.append((combo, output_data))
         
-        save_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../Dataset/Tdataset/format'))
+        save_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'format'))
         os.makedirs(save_dir, exist_ok=True)
         output_file_path = os.path.join(save_dir, f'filtered_flights_{month}_{"_".join(map(str, fleet_types))}.csv')
         output_data.to_csv(output_file_path, index=False)
@@ -58,7 +58,7 @@ def process_flight_data(file_path, target_sum):
 month = input("Enter month (e.g., 01 for January): ")
 target_sum = int(input("Enter target sum: "))
 
-file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../../Dataset/Tdataset/raw/tt2014{month}.legs'))
+file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'raw/tt2014{month}.legs'))
 
 if not os.path.exists(file_path):
     print(f"File not found: {file_path}")
