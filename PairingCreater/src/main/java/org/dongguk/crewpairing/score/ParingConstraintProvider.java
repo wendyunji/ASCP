@@ -32,17 +32,6 @@ public class ParingConstraintProvider implements ConstraintProvider {
                 //satisCost(constraintFactory),
         };
     }
-    /**
-     * HARD
-     * 모기지에서 출발하는지 확인(Depart base):
-     * Depart Base 어긴 제약 -> 하드스코어 부여(1000)
-     */
-    private Constraint departBase(ConstraintFactory constraintFactory) {
-        return constraintFactory.forEach(Pairing.class)
-                .filter(Pairing::isNotDepartBase)
-                .penalize(HardSoftLongScore.ofHard(1000))
-                .asConstraint("Depart base");
-    }
 
     /**
      * HARD
@@ -68,13 +57,6 @@ public class ParingConstraintProvider implements ConstraintProvider {
                 .asConstraint("Airport possible");
     }
 
-    private Constraint aircraftPossible(ConstraintFactory constraintFactory){
-        return constraintFactory.forEach(Pairing.class)
-                .filter(Pairing::isDifferentAircraft)
-                .penalize(HardSoftLongScore.ofHard(1000))
-                .asConstraint("Aircraft possible");
-    }
-
     /**
      * HARD
      * 연속된 비행 일수 제약(law possible):
@@ -88,35 +70,56 @@ public class ParingConstraintProvider implements ConstraintProvider {
                 .asConstraint("law possible");
     }
 
+    /**
+     * ???
+     * 페어링 최대 4일 제약 (pairing length):
+     * pairings usually take 1–4 days -> ??스코어 부여(??)
+     */
     private Constraint pairLengthPossible(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(Pairing::isLenghtPossible)
-                .penalize(HardSoftLongScore.ofHard(1000))
+                .penalize(HardSoftLongScore.ZERO_SOFT)
                 .asConstraint("length possible");
     }
 
+    /**
+     * SOFT
+     * 모기지에서 출발하는지 확인(Depart base):
+     * Depart Base 어긴 제약 -> 소프트스코어 부여(출발지가 모기지가 아닌 페어링 당 90점)
+     */
+    private Constraint departBase(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Pairing.class)
+                .filter(Pairing::isNotDepartBase)
+                .penalize(HardSoftLongScore.ofSoft(90))
+                .asConstraint("Depart base");
+    }
+
+    /**
+     * SOFT
+     * 페어링의 총 일수 확인(Total Mandays):
+     * 총 Manday가 큰 경우 -> 소프트스코어 부여(총 Manday 일당 2점)
+     */
     private Constraint activeTimeCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
-                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getActiveTimeCost)
+                .penalize(HardSoftLongScore.ONE_SOFT, pairing -> 2 * pairing.getActiveTimeCost())
                 .asConstraint("length cost");
     }
 
     /**
      * SOFT
      * deadhead cost 계산(Base diff):
-     * 첫 출발공항과 마지막 도착공항이 다를 시 - > 소프트스코어 부여(항공편에 따른 가격)
+     * 첫 출발공항과 마지막 도착공항이 다를 시 - > 소프트스코어 부여(데드헤드가 존재하는 페어링 당 8점)
      * @return getDeadheadCost
      */
     private Constraint deadHeadCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 1 && pairing.isEqualBase()))
-                //.penalize(HardSoftLongScore.ONE_SOFT, Pairing::getDeadHeadCost)
                 .penalize(HardSoftLongScore.ofSoft(8))
                 .asConstraint("Base diff");
     }
 
     /**
-     * SOFT
+     * ???
      * 총 layover cost 계산(Layover cost):
      * 페어링 길이가 2 이상일 시 - > 소프트스코어 부여(layover 발생 시 cost+)
      * @return getLayoverCost
@@ -124,12 +127,13 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint layoverCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getLayoverCost)
+                .penalize(HardSoftLongScore.ZERO_SOFT)
+                // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getLayoverCost)
                 .asConstraint("Layover cost");
     }
 
     /**
-     * SOFT
+     * ???
      * 총 QuickTurn cost 계산(QuickTurn cost):
      * 페어링 길이가 2 이상일 시 - > 소프트스코어 부여(QuickTurn cost 발생 시 cost+)
      * @return getMovingWorkCost
@@ -137,12 +141,13 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint quickTurnCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getQuickTurnCost)
+                .penalize(HardSoftLongScore.ZERO_SOFT)
+                // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getQuickTurnCost)
                 .asConstraint("QuickTurn Cost");
     }
 
     /**
-     * SOFT
+     * ???
      * 총 호텔숙박비 cost 계산(Hotel cost):
      * 페어링 길이가 2 이상일 시 - > 소프트스코어 부여(Hotel cost 발생 시 cost+)
      * @return getHotelCost
@@ -150,12 +155,13 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint hotelCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getHotelCost)
+                .penalize(HardSoftLongScore.ZERO_SOFT)
+                // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getHotelCost)
                 .asConstraint("Hotel Cost");
     }
 
     /**
-     * SOFT
+     * ???
      * 승무원 만족도 cost 계산(Satis cost):
      * 승무원의 휴식시간에 따른 만족도를 코스트로 score 부여
      * / 페어링 길이가 2 이상일 시 - > 소프트스코어 부여(Satis cost 발생 시 cost+)
@@ -164,7 +170,8 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint satisCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getSatisCost)
+                .penalize(HardSoftLongScore.ZERO_SOFT)
+                // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getSatisCost)
                 .asConstraint("Satis cost");
     }
 }
