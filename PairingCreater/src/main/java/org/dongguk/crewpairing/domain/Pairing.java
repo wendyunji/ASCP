@@ -197,7 +197,7 @@ public class Pairing extends AbstractPersistable {
     public Boolean isLenghtPossible(){
         if (pair.size() <= 1) return false;
 
-        if (ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()) > 4)
+        if (ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime())+1 > 4)
             return true;
         else return false;
     }

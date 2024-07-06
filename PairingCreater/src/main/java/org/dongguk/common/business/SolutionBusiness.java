@@ -205,15 +205,26 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
 
             // 최신 솔루션의 페어링 리스트를 가져와 로깅
             List<Pairing> pairingList = solution.getPairingList();
-            // writeLog(logFilePath, "Current Pairing List: " + pairingList.toString());
 
             // 데드헤드와 맨데이 구하기
             int deadheadCnt = 0;
             int mandayLen = 0;
+            int filteredFlightCount = 0;
+            int includedFlightCount = 0;
 
             for (Pairing pairing : pairingList) {
                 List<Flight> pair = pairing.getPair();
                 if (!pair.isEmpty()) {
+                    String originAirport = pair.get(0).getOriginAirport().getName();
+
+                    // HB1 또는 HB2에서 출발하지 않는 페어링 필터링
+                    if (!"HB1".equals(originAirport) && !"HB2".equals(originAirport)) {
+                        filteredFlightCount += pair.size();
+                        continue; // 필터링된 페어링은 계산에서 제외
+                    }
+
+                    includedFlightCount += pair.size(); // 포함된 비행 카운트 증가
+
                     if (pair.get(0).getOriginAirport() != pair.get(pair.size() - 1).getDestAirport()) {
                         deadheadCnt++; // #of deadheads
                     }
@@ -224,7 +235,7 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
                 }
             }
 
-            writeLog(logFilePath, "Deadhead Count: " + deadheadCnt + "  Mandays: " + mandayLen);
+            writeLog(logFilePath, "Deadhead Count: " + deadheadCnt + "  Mandays: " + mandayLen + ", Active Legs: " + includedFlightCount + ", Excluded Legs: " + filteredFlightCount);
 
         }, 0, 240, TimeUnit.SECONDS);
     }
