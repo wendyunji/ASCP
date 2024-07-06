@@ -79,6 +79,17 @@ public class Pairing extends AbstractPersistable {
     }
 
     /**
+     * 모기지에서 출발하지 않는 페어링의 비행 횟수가 2를 넘어가는지 확인
+     * @return boolean
+     */
+    public boolean isNotDepartBaseMoreThanTwo() {
+        if (isNotDepartBase() && pair.size() > 2) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 동일 공항 출발 여부 확인
      * / 도착 공항과 출발 공항이 다를 시 true 반환
      * @return boolean

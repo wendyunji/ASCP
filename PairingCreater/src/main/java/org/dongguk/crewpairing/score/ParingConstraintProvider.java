@@ -19,13 +19,14 @@ public class ParingConstraintProvider implements ConstraintProvider {
         return new Constraint[]{
                 timePossible(constraintFactory),
                 airportPossible(constraintFactory),
-                aircraftPossible(constraintFactory),
+                // aircraftPossible(constraintFactory),
                 continuityPossible(constraintFactory),
                 pairLengthPossible(constraintFactory),
                 departBase(constraintFactory),
                 deadHeadCost(constraintFactory),
-                activeTimeCost(constraintFactory)
-                
+                activeTimeCost(constraintFactory),
+                notDepartBaseMoreThanTwo(constraintFactory)
+
                 //layoverCost(constraintFactory),
                 //quickTurnCost(constraintFactory),
                 //hotelCost(constraintFactory),
@@ -36,50 +37,62 @@ public class ParingConstraintProvider implements ConstraintProvider {
     /**
      * HARD
      * 시간 제약(Flight possible):
-     * TimeImpossible 어긴 제약 -> 하드스코어 부여(1000)
+     * TimeImpossible 어긴 제약 -> 하드스코어 부여(1)
      */
     private Constraint timePossible(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(Pairing::isImpossibleTime)
-                .penalize(HardSoftLongScore.ofHard(1000))
+                .penalize(HardSoftLongScore.ofHard(1))
                 .asConstraint("Flight possible");
     }
 
     /**
      * HARD
      * 공간 제약(Airport possible):
-     * AirportImpossible 어긴 제약 -> 하드스코어 부여(1000)
+     * AirportImpossible 어긴 제약 -> 하드스코어 부여(1)
      */
     private Constraint airportPossible(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(Pairing::isImpossibleAirport)
-                .penalize(HardSoftLongScore.ofHard(1000))
+                .penalize(HardSoftLongScore.ofHard(1))
                 .asConstraint("Airport possible");
     }
 
     /**
      * HARD
      * 연속된 비행 일수 제약(law possible):
-     * 연속된 비행이ㅣ 14시간 이상인 제약 -> 하드스코어 부여(1000)
+     * 연속된 비행이ㅣ 14시간 이상인 제약 -> 하드스코어 부여(1)
      */
     private Constraint continuityPossible(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> pairing.getPair().size() >= 2)
                 .filter(Pairing::isImpossibleContinuity)
-                .penalize(HardSoftLongScore.ofHard(1000))
+                .penalize(HardSoftLongScore.ofHard(1))
                 .asConstraint("law possible");
     }
 
     /**
-     * ???
+     * HARD
      * 페어링 최대 4일 제약 (pairing length):
-     * pairings usually take 1–4 days -> ??스코어 부여(??)
+     * pairings usually take 1–4 days -> 하드스코어 부여(1)
      */
     private Constraint pairLengthPossible(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(Pairing::isLenghtPossible)
-                .penalize(HardSoftLongScore.ZERO_SOFT)
+                .penalize(HardSoftLongScore.ofHard(1))
                 .asConstraint("length possible");
+    }
+
+    /**
+     * HARD
+     * 모기지에서 출발하지 않는 페어링의 비행 횟수가 2를 넘어가는지 확인
+     * @return Constraint
+     */
+    private Constraint notDepartBaseMoreThanTwo(ConstraintFactory constraintFactory) {
+        return constraintFactory.forEach(Pairing.class)
+                .filter(Pairing::isNotDepartBaseMoreThanTwo)
+                .penalize(HardSoftLongScore.ofHard(1))
+                .asConstraint("Not depart base more than two flights");
     }
 
     /**
@@ -127,7 +140,7 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint layoverCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ZERO_SOFT)
+                .penalize(HardSoftLongScore.ofSoft(0))
                 // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getLayoverCost)
                 .asConstraint("Layover cost");
     }
@@ -141,7 +154,7 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint quickTurnCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ZERO_SOFT)
+                .penalize(HardSoftLongScore.ofSoft(0))
                 // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getQuickTurnCost)
                 .asConstraint("QuickTurn Cost");
     }
@@ -155,7 +168,7 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint hotelCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ZERO_SOFT)
+                .penalize(HardSoftLongScore.ofSoft(0))
                 // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getHotelCost)
                 .asConstraint("Hotel Cost");
     }
@@ -170,7 +183,7 @@ public class ParingConstraintProvider implements ConstraintProvider {
     private Constraint satisCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
                 .filter(pairing -> (pairing.getPair().size() >= 2))
-                .penalize(HardSoftLongScore.ZERO_SOFT)
+                .penalize(HardSoftLongScore.ofSoft(0))
                 // .penalize(HardSoftLongScore.ONE_SOFT, Pairing::getSatisCost)
                 .asConstraint("Satis cost");
     }
