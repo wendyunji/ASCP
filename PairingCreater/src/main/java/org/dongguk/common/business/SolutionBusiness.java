@@ -211,6 +211,7 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
             int mandayLen = 0;
             int filteredFlightCount = 0;
             int includedFlightCount = 0;
+            int[] arr = solution.calculateMandays();
 
             for (Pairing pairing : pairingList) {
                 List<Flight> pair = pairing.getPair();
@@ -235,9 +236,11 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
                 }
             }
 
-            writeLog(logFilePath, "Deadhead Count: " + deadheadCnt + "  Mandays: " + mandayLen + ", Active Legs: " + includedFlightCount + ", Excluded Legs: " + filteredFlightCount);
+            writeLog(logFilePath, "Deadhead Count: " + deadheadCnt + "  Mandays: " + mandayLen +
+                    ", Active Legs: " + includedFlightCount + ", Excluded Legs: " + filteredFlightCount
+                    +", DH Excluded Legs: " + arr[0] + ", newMandays: " + arr[1]);
 
-        }, 0, 240, TimeUnit.SECONDS);
+        }, 0, 60, TimeUnit.SECONDS);
     }
 
     private void writeLog(String logFilePath, String message) {

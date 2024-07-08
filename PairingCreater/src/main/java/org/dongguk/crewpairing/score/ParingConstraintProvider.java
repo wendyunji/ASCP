@@ -126,7 +126,7 @@ public class ParingConstraintProvider implements ConstraintProvider {
      */
     private Constraint deadHeadCost(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Pairing.class)
-                .filter(pairing -> (pairing.getPair().size() >= 1 && pairing.isEqualBase()))
+                .filter(pairing -> (pairing.getPair().size() >= 1 && pairing.isDeadhead()))
                 .penalize(HardSoftLongScore.ofSoft(8))
                 .asConstraint("Base diff");
     }
