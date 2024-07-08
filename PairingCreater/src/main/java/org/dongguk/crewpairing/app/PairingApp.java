@@ -60,6 +60,7 @@ public class PairingApp extends CommonApp<PairingSolution> {
         System.out.println(solution);
 
         solution.printScore();
+        solution.calculateMandays();
 
         // Check score detail
         SolutionManager<PairingSolution, HardSoftLongScore> scoreManager = SolutionManager.create(business.getSolverFactory());

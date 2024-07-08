@@ -11,11 +11,9 @@ import org.optaplanner.core.api.score.buildin.hardsoftlong.HardSoftLongScore;
 
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
 
 @Getter
@@ -54,7 +52,7 @@ public class PairingSolution extends AbstractPersistable {
 
             if (pairing.getPair().size() == 0) {
                 str = " ---------------- !! Not Using";
-            } else if (pairing.isEqualBase()) {
+            } else if (pairing.isDeadhead()) {
                 str = " ---------------- !! DeadHead";
             }
 
@@ -75,6 +73,7 @@ public class PairingSolution extends AbstractPersistable {
         this.score = null;
     }
 
+
     private String date2String(Pairing pairing) {
         StringBuilder sb = new StringBuilder();
         sb.append("[ ");
@@ -85,6 +84,49 @@ public class PairingSolution extends AbstractPersistable {
 
         return sb.toString();
     }
+    public int[] calculateMandays() {
+        List<Pairing> pairingList = new ArrayList<>(this.pairingList);
+        pairingList.removeIf(pairing -> pairing.getPair().isEmpty());
+
+        List<Pairing> toRemove = new ArrayList<>();
+        for (Pairing pairing : pairingList) {
+            if (pairing.isNotDepartBase()) {
+                toRemove.add(pairing);
+            }
+        }
+        pairingList.removeAll(toRemove);
+        pairingList.sort(Comparator.comparing(a -> a.getPair().get(0).getOriginTime()));
+
+        int mandays = 0;
+        int deactivated = 0;
+        for (int i = 0; i < pairingList.size(); i++) {
+            List<Flight> pair = pairingList.get(i).getPair();
+
+            if (pairingList.get(i).isDeadhead()) {
+                boolean dhComplete = false;
+                for (int j = i + 1; j < pairingList.size(); j++) {
+                    List<Flight> checkPair = pairingList.get(j).getPair();
+                    Flight oriFlight = pair.get(0);
+                    Flight dhFlight = pair.get(pair.size() - 1);
+                    Flight returnFlight = checkPair.get(checkPair.size() - 1);
+
+                    if (returnFlight.getOriginTime().isAfter(dhFlight.getDestTime())) continue;
+                    if (ChronoUnit.DAYS.between(oriFlight.getOriginTime(), returnFlight.getDestTime()) > 4) continue;
+                    if (!returnFlight.getOriginAirport().equals(dhFlight.getDestAirport())) continue;
+                    if (!returnFlight.getDestAirport().equals(oriFlight.getOriginAirport())) continue;
+
+                    mandays += ChronoUnit.DAYS.between(oriFlight.getOriginTime(), returnFlight.getDestTime()) + 1;
+                    dhComplete = true;
+                    break;
+                }
+                if (!dhComplete) deactivated += 1;
+            }
+
+            else mandays += ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()) + 1;
+    }
+        return new int[] {deactivated, mandays};
+    }
+
     public void printScore(){
         pairingList.removeIf(x -> x.getPair().isEmpty());
         int layoverTime = 360;

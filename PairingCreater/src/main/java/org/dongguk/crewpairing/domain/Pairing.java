@@ -154,7 +154,7 @@ public class Pairing extends AbstractPersistable {
      * / 처음 출발 공항과 마지막 도착 공항이 다를 시 true
      * @return boolean
      */
-    public boolean isEqualBase() {
+    public boolean isDeadhead() {
         String startAirport = pair.get(0).getOriginAirport().getName();
         String endAirport = pair.get(pair.size() - 1).getDestAirport().getName();
 
