@@ -28,15 +28,15 @@ public class Pairing extends AbstractPersistable {
     private static int LayoverTime;
     private static int QuickTurnaroundTime;
     private static int checkContinueTime = 60 * 4;
-    private static int continueMaxTime = 14 * 60;
-    private static int workMaxTime = 8 * 60;
+    private static int continueMaxTime = 12 * 60;
+    private static int workMaxTime = 6 * 60;
 
     public static void setStaticTime(int briefingTime, int debriefingTime,
                                      int restTime, int LayoverTime, int QuickTurnaroundTime) {
         Pairing.briefingTime = briefingTime;
         Pairing.debriefingTime = debriefingTime;
         Pairing.restTime = restTime;
-        Pairing.LayoverTime = LayoverTime;
+        Pairing.LayoverTime = LayoverTime + 2*60 ;      // brief와 debrief를 고려하기 위한 layover time 2시간 증가
         Pairing.QuickTurnaroundTime = QuickTurnaroundTime;
     }
 
@@ -75,6 +75,17 @@ public class Pairing extends AbstractPersistable {
         String originAirport = pair.get(0).getOriginAirport().getName();
         if(!originAirport.equals("HB1") && !originAirport.equals("HB2")) return true;
 
+        return false;
+    }
+
+    /**
+     * 모기지에서 출발하지 않는 페어링의 비행 횟수가 2를 넘어가는지 확인
+     * @return boolean
+     */
+    public boolean isNotDepartBaseMoreThanTwo() {
+        if (isNotDepartBase() && pair.size() > 2) {
+            return true;
+        }
         return false;
     }
 
@@ -143,7 +154,7 @@ public class Pairing extends AbstractPersistable {
      * / 처음 출발 공항과 마지막 도착 공항이 다를 시 true
      * @return boolean
      */
-    public boolean isEqualBase() {
+    public boolean isDeadhead() {
         String startAirport = pair.get(0).getOriginAirport().getName();
         String endAirport = pair.get(pair.size() - 1).getDestAirport().getName();
 
@@ -170,19 +181,23 @@ public class Pairing extends AbstractPersistable {
     }
 
     /**
-     * 페어링의 총 갈아 반환 (일)
+     * 페어링의 총 길아 반환 (일)
      * @return 마지막 비행 도착시간 - 처음 비행 시작시간
      */
     public Integer getActiveTimeCost() {
         if (pair.size() == 0) return 0;
 
-        return Math.max(0, 2* (int) ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()));
+        return Math.max(0, (int) ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()));
     }
 
+    /**
+     * 페어링이 4일을 넘는 지 반환 (Boolean)
+     * @return 4일을 넘으면 true, 아니면 false
+     */
     public Boolean isLenghtPossible(){
         if (pair.size() <= 1) return false;
 
-        if (ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()) > 4)
+        if (ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime())+1 > 4)
             return true;
         else return false;
     }

@@ -27,6 +27,19 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import org.dongguk.crewpairing.domain.PairingSolution;
+import org.dongguk.crewpairing.domain.Pairing;
+import org.dongguk.crewpairing.domain.Flight;
+import java.time.temporal.ChronoUnit;
+
 import static java.util.stream.Collectors.toList;
 
 @Getter
@@ -148,7 +161,20 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
         }
     }
 
+    private ScheduledExecutorService scheduler;
+    private long startTime;
+
     public Solution_ solve(Solution_ problem) {
+        // 시작 시간 기록
+        startTime = System.currentTimeMillis();
+
+        // 현재 날짜와 시간을 기반으로 파일 이름 생성
+        String timeStamp = new SimpleDateFormat("yyyy-MM-dd_HH:mm").format(new Date());
+        String logFilePath = "./data/crewpairing/score/dhact_" + timeStamp + "_log.txt";
+        
+        // 스케줄러 시작
+        startLogging(logFilePath);
+
         SolverJob<Solution_, Long> solverJob = solverManager.solveAndListen(SOLVER_JOB_ID_COUNTER.getAndIncrement(),
                 id -> problem, this::setSolution);
         solverJobRef.set(solverJob);
@@ -161,6 +187,74 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
             throw new IllegalStateException("Solver threw an exception.", e);
         } finally {
             solverJobRef.set(null); // Don't keep references to jobs that have finished solving.
+            // 스케줄러 종료
+            if (scheduler != null) {
+                scheduler.shutdown();
+            }
+        }
+    }
+
+    private void startLogging(String logFilePath) {
+        scheduler = Executors.newScheduledThreadPool(1);
+        scheduler.scheduleAtFixedRate(() -> {
+            PairingSolution solution = (PairingSolution) getSolution();
+            if (solution == null) {
+                writeLog(logFilePath, "Solution is null, skipping logging.");
+                return;
+            }
+
+            // 최신 솔루션의 페어링 리스트를 가져와 로깅
+            List<Pairing> pairingList = solution.getPairingList();
+
+            // 데드헤드와 맨데이 구하기
+            int deadheadCnt = 0;
+            int mandayLen = 0;
+            int filteredFlightCount = 0;
+            int includedFlightCount = 0;
+            int[] arr = solution.calculateMandays();
+
+            for (Pairing pairing : pairingList) {
+                List<Flight> pair = pairing.getPair();
+                if (!pair.isEmpty()) {
+                    String originAirport = pair.get(0).getOriginAirport().getName();
+
+                    // HB1 또는 HB2에서 출발하지 않는 페어링 필터링
+                    if (!"HB1".equals(originAirport) && !"HB2".equals(originAirport)) {
+                        filteredFlightCount += pair.size();
+                        continue; // 필터링된 페어링은 계산에서 제외
+                    }
+
+                    includedFlightCount += pair.size(); // 포함된 비행 카운트 증가
+
+                    if (pair.get(0).getOriginAirport() != pair.get(pair.size() - 1).getDestAirport()) {
+                        deadheadCnt++; // #of deadheads
+                    }
+
+                    if (pair.get(0).getOriginTime() != null && pair.get(pair.size() - 1).getDestTime() != null) {
+                        mandayLen += ChronoUnit.DAYS.between(pair.get(0).getOriginTime().toLocalDate(), pair.get(pair.size() - 1).getDestTime().toLocalDate()) + 1;
+                    }
+                }
+            }
+
+            writeLog(logFilePath, "Deadhead Count: " + deadheadCnt + "  Mandays: " + mandayLen +
+                    ", Active Legs: " + includedFlightCount + ", Excluded Legs: " + filteredFlightCount
+                    +", DH Excluded Legs: " + arr[0] + ", newMandays: " + arr[1]);
+
+        }, 0, 240, TimeUnit.SECONDS);
+    }
+
+    private void writeLog(String logFilePath, String message) {
+        long currentTime = System.currentTimeMillis();
+        long elapsedTime = currentTime - startTime;
+        long minutes = (elapsedTime / 1000) / 60;
+        long seconds = (elapsedTime / 1000) % 60;
+        String elapsedTimeFormatted = String.format("%02d:%02d", minutes, seconds);
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFilePath, true))) {
+            writer.write(elapsedTimeFormatted + " - " + message);
+            writer.newLine();
+        } catch (IOException e) {
+            LOGGER.error("Failed to write log", e);
         }
     }
 
