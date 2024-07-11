@@ -231,7 +231,7 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
                     }
 
                     if (pair.get(0).getOriginTime() != null && pair.get(pair.size() - 1).getDestTime() != null) {
-                        mandayLen += ChronoUnit.DAYS.between(pair.get(0).getOriginTime(), pair.get(pair.size() - 1).getDestTime()) + 1;
+                        mandayLen += ChronoUnit.DAYS.between(pair.get(0).getOriginTime().toLocalDate(), pair.get(pair.size() - 1).getDestTime().toLocalDate()) + 1;
                     }
                 }
             }
@@ -240,7 +240,7 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
                     ", Active Legs: " + includedFlightCount + ", Excluded Legs: " + filteredFlightCount
                     +", DH Excluded Legs: " + arr[0] + ", newMandays: " + arr[1]);
 
-        }, 0, 60, TimeUnit.SECONDS);
+        }, 0, 240, TimeUnit.SECONDS);
     }
 
     private void writeLog(String logFilePath, String message) {

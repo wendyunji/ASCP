@@ -28,15 +28,15 @@ public class Pairing extends AbstractPersistable {
     private static int LayoverTime;
     private static int QuickTurnaroundTime;
     private static int checkContinueTime = 60 * 4;
-    private static int continueMaxTime = 14 * 60;
-    private static int workMaxTime = 8 * 60;
+    private static int continueMaxTime = 12 * 60;
+    private static int workMaxTime = 6 * 60;
 
     public static void setStaticTime(int briefingTime, int debriefingTime,
                                      int restTime, int LayoverTime, int QuickTurnaroundTime) {
         Pairing.briefingTime = briefingTime;
         Pairing.debriefingTime = debriefingTime;
         Pairing.restTime = restTime;
-        Pairing.LayoverTime = LayoverTime;
+        Pairing.LayoverTime = LayoverTime + 2*60 ;      // brief와 debrief를 고려하기 위한 layover time 2시간 증가
         Pairing.QuickTurnaroundTime = QuickTurnaroundTime;
     }
 
