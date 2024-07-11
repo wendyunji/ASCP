@@ -15,6 +15,7 @@ import openpyxl
 from datetime import datetime
 import csv
 
+
 # Hyperparameters
 learning_rate = 0.005
 gamma = 0.98
@@ -85,14 +86,53 @@ def train(q, q_target, memory, optimizer):
         loss.backward()
         optimizer.step()
 
+def print_xlsx(output, output_pairing_filename):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+
+    # Pairing data 제목 추가
+    sheet.cell(row=1, column=1, value="Pairing data")
+
+    # 데이터를 엑셀에 쓰기
+    for row_index, row_data in enumerate(output, start=2):  # 첫 번째 행은 이미 Pairing data로 사용되었으므로 2부터 시작
+        # 각 행의 첫 열에는 1부터 시작하는 인덱스 추가
+        sheet.cell(row=row_index, column=1, value=row_index - 1)
+
+        # 나머지 데이터 추가
+        for col_index, value in enumerate(row_data, start=2):  # 각 행의 두 번째 열부터 시작
+            sheet.cell(row=row_index, column=col_index, value=value)
+
+    workbook.save(output_pairing_filename)
+    
+def print_xlsx_tmp(n_epi, number, output_tmp, folder_path):
+    if n_epi % number == 0:
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+
+        # Pairing data 제목 추가
+        sheet.cell(row=1, column=1, value="Pairing data")
+        sheet.cell(row=1, column=2, value=f"episode_{n_epi}")
+
+        # 데이터를 엑셀에 쓰기
+        for row_index, row_data in enumerate(output_tmp, start=2):  # 첫 번째 행은 이미 Pairing data로 사용되었으므로 2부터 시작
+            # 각 행의 첫 열에는 1부터 시작하는 인덱스 추가
+            sheet.cell(row=row_index, column=1, value=row_index - 1)
+        # 나머지 데이터 추가
+        for col_index, value in enumerate(row_data, start=2):  # 각 행의 두 번째 열부터 시작
+            sheet.cell(row=row_index, column=col_index, value=value)
+
+    # 저장
+    file_name = f"output_{n_epi}.xlsx"
+    file_path = os.path.join(folder_path, file_name)
+
+    workbook.save(file_path)
 def main():
     # 사용자로부터 실행할 데이터의 년월일, 에피소드 수, 실행 ID 입력 받기
-    month = input("Enter the month of the input file (e.g., 201406): ")
-    episodes = int(input("Enter the number of episodes to run: "))
-    excutionId = input("Enter the excution ID (eg., 20240704-1): ")
-
+    month = input('Enter the month of the input file (e.g., 201406): ')
+    episodes = int(input('Enter the number of episodes to run: '))
+    excutionId = input('Enter the excution ID (eg., 20240704-1): ')
     current_directory = os.path.dirname(__file__)
-    
+
     # 요구 디렉토리
     output_directory = os.path.join(current_directory, '../output')
     logs_directory = os.path.join(current_directory, '../logs')
@@ -110,25 +150,22 @@ def main():
     readXlsx(path, f'/ASCP_Data_Input_{month}.xlsx')
 
     # 데이터 임베딩
-    flight_list, V_f_list, NN_size = embedFlightData(path)
+    flight_list, V_f_list, NN_size, airport_total = embedFlightData(path)
     print('Data Imported')
-    #flight_list, V_f_list, NN_size = embedFlightData_Stratified(path)
+    print("Number of Flights :", len(flight_list))
 
     # Load Crew Pairing Environment
-    N_flight = len(flight_list)
-    print("Number of Flights :", N_flight)
-    env = CrewPairingEnv(V_f_list, flight_list)
+    env = CrewPairingEnv(V_f_list, flight_list, airport_total)
     q = Qnet(NN_size)
-
     q_target = Qnet(NN_size)
     q_target.load_state_dict(q.state_dict())
     memory = ReplayBuffer()
 
     optimizer = optim.Adam(q.parameters(), lr=learning_rate)
 
-    score = -INF
-    best_score = -INF
-    output = [[] for i in range(N_flight)]
+    score = -float('inf')
+    best_score = -float('inf')
+    output = [[] for _ in range(len(flight_list))]
 
     # 에피소드 별 리워드와 소요 시간을 기록하는 로그 파일(csv)을 logs에 저장
     logs_filename = os.path.join(logs_directory, f'episode_rewards_{month}_{episodes}_{excutionId}.csv')
@@ -137,7 +174,7 @@ def main():
         csvwriter.writerow(["Episode", "Reward", "Best Score", "Time Elapsed"])
         csvwriter.writerow(["------------------------------------------"])
         time = datetime.now()
-    
+
         for n_epi in range(episodes):
             print(f"Episode {n_epi}, Time Elapsed: {datetime.now() - time}")
             epsilon = max(0.01, 0.08 - 0.01 * (n_epi / 200))  # Linear annealing from 8% to 1%
@@ -172,9 +209,8 @@ def main():
             score = 0
 
     env.close()
-    
+
     # 최종 생성된 페어링을 xlsx로 ouput 디렉토리에 저장
     print_xlsx(output, os.path.join(output_directory, f'output_pairing_{month}_{episodes}_{excutionId}.xlsx'))
-    
-if __name__ == '__main__':
-    main()
+
+main()

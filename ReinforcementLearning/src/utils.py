@@ -5,18 +5,27 @@ import copy
 
 #Aircraft['[0,0,1]'] = [crewnum, layover, quickturn]
 
-def checkConnection(V_p, V_f):
+def checkConnection(V_p, V_f, homeindex):
     
-    if V_p == [0,0,0,[0],[0],[0]] : return True
+    if V_p == [0,0,0,[0],[0],[0]] : 
+        return True
+    if V_p[3][homeindex] != 1:
+        return False
+    
     flight_gap = V_f[0] - V_p[1]
     
-    if V_p[4] == V_p[3]: return False  # 완성된 페어링
-    if V_f[1]-V_p[0] > 7*24*60: return False # 페어링 길이 제약
-    if flight_gap < 0: return False  # 시간의 선후관계 제약
-    if V_p[4] != V_f[3]: return False  # 공간 제약
-    if V_p[5] != V_f[5]: return False  # 항공기 기종 제약
-    if flight_gap < 10 * 60:  # 법적 제약
-        if V_p[2] + V_f[2] + flight_gap > 14 * 60: return False
+    if V_p[4] == V_p[3]: 
+        return False  # 완성된 페어링
+    if V_f[1] - V_p[0] > 12 * 60: 
+        return False  # 페어링 길이 제약 -> 14시간으로 수정
+    if flight_gap < 0: 
+        return False  # 시간의 선후관계 제약
+    if V_p[4] != V_f[3]: 
+        return False  # 공간 제약
+    if V_p[5] != V_f[5]: 
+        return False  # 항공기 기종 제약
+    if V_p[2] + V_f[2] > 6 * 60: 
+        return False
 
     return True
 
@@ -29,11 +38,7 @@ def update_state(V_p_list, V_f, idx) :
         V_p = V_f_tmp
     
     else :
-        flight_gap = V_f_tmp[0] - V_p[1]
-        
-        if flight_gap < 10*60 :
-            V_p[2] += flight_gap + V_f_tmp[2]    # 휴식시간이 없었다면 V_p_dur에 gap과 c_dur을 더함
-        else : V_p[2] = V_f_tmp[2]               # 만약 휴식시간을 가졌다면 dur 초기화
+        V_p[2] += V_f_tmp[2]    # 휴식시간이 없었다면 V_p_dur에 gap과 c_dur을 더함
         
         V_p[1] = V_f_tmp[1] # 도착시간
         V_p[4] = V_f_tmp[4] # 도착공항
@@ -46,6 +51,6 @@ def get_reward(V_p_list, V_f, idx) :
 
     if V_p[3] == V_f[4] :
         reward = 1
-    else : reward = -1
+    else : reward = 0
         
     return reward
