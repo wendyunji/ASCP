@@ -46,18 +46,18 @@ def aircraftList(Aircraft):
     # 순서대로 onehot으로 mapping
     return Aircraft_total
 
-def embedFlightData(path): # flight 객체 생성 및 vector로 변환, flight_list, V_f_list 반환
+def embedFlightData(path):  # flight 객체 생성 및 vector로 변환, flight_list, V_f_list 반환
     idprovider = IDProvider() 
-    fdf = pd.read_csv(path+'/User_Flight.csv')
+    fdf = pd.read_csv(path + '/User_Flight.csv')
     # 200개 행 읽어오기
-    #fdf = fdf.head(200)
+    # fdf = fdf.head(200)
     fdf = fdf.drop(fdf.index[0])
     fdf.columns = fdf.iloc[0]
     fdf = fdf.drop(fdf.index[0])
-    flight_list=[] # flight 객체를 저장할 리스트
-    V_f_list = [] # flight 객체를 vector로 변환하여 저장할 리스트
+    flight_list = []  # flight 객체를 저장할 리스트
+    V_f_list = []  # flight 객체를 vector로 변환하여 저장할 리스트
 
-    for idx, row in fdf.iterrows(): # flight 객체 생성
+    for idx, row in fdf.iterrows():  # flight 객체 생성
         flight = Flight(
             idx=idprovider.get_flight_id(),  # 싱글톤인 idprovider 호출하여 flight에 id 부여
             TailNumber=row['T/N'],
@@ -69,12 +69,11 @@ def embedFlightData(path): # flight 객체 생성 및 vector로 변환, flight_l
         )
         flight_list.append(flight)
     
-    flight_list=sorted(flight_list) # originTime 기준으로 정렬(originTime이 같다면 destTime 기준으로 정렬)
+    flight_list = sorted(flight_list)  # originTime 기준으로 정렬(originTime이 같다면 destTime 기준으로 정렬)
     
-    # airport_total = airportList(fdf['ORIGIN'], fdf['DEST'])
     aircraft_total = aircraftList(fdf['AIRCRAFT_TYPE'])
     
-    ddf=pd.read_csv(path+'/User_Deadhead.csv')
+    ddf = pd.read_csv(path + '/User_Deadhead.csv')
     ddf = ddf.drop(ddf.index[0])
     ddf.columns = ddf.iloc[0]
     ddf = ddf.drop(ddf.index[0])
@@ -95,13 +94,13 @@ def embedFlightData(path): # flight 객체 생성 및 vector로 변환, flight_l
         Airport.add_edge(row['출발 공항'], row['도착 공항'], row['Deadhead(원)'])
 
     
-    cdf=pd.read_csv(path+'/Program_Cost.csv')
+    cdf = pd.read_csv(path + '/Program_Cost.csv')
     cdf.columns = cdf.iloc[0]
     cdf = cdf.drop(cdf.index[0])
-    for idx,row in cdf.iterrows():
+    for idx, row in cdf.iterrows():
         aircraft_onehot = [0 for _ in range(len(aircraft_total))]
         
-        for i,aircraft in enumerate(aircraft_total):
+        for i, aircraft in enumerate(aircraft_total):
             if aircraft == row['AIRCRAFT']:
                 aircraft_onehot[i] = 1
         cdf.at[idx, 'AIRCRAFT'] = aircraft_onehot
@@ -110,15 +109,15 @@ def embedFlightData(path): # flight 객체 생성 및 vector로 변환, flight_l
 #    del Aircraft.dic[temp]
     
     
-    hdf=pd.read_csv(path+'/User_Hotel.csv')
+    hdf = pd.read_csv(path + '/User_Hotel.csv')
     hdf = hdf.drop(hdf.index[0])
     hdf.columns = hdf.iloc[0]
-    hdf=hdf.drop(hdf.index[0])
+    hdf = hdf.drop(hdf.index[0])
     hdf = hdf.dropna(subset=[hdf.columns[0]])
-    for idx,row in hdf.iterrows():
+    for idx, row in hdf.iterrows():
         airport_onehot = [0 for i in range(len(airport_total))]
         
-        for i,airport in enumerate(airport_total):
+        for i, airport in enumerate(airport_total):
             if airport == row['공항 Code']:
                 airport_onehot[i] = 1
         hdf.at[idx, '공항 Code'] = airport_onehot
@@ -127,11 +126,10 @@ def embedFlightData(path): # flight 객체 생성 및 vector로 변환, flight_l
     for i in range(len(flight_list)):
         V_f_list.append(flight_list[i].toVector(airport_total, aircraft_total))
 
-
     # Neural net size : (시간 2진수 배열 -> 16bit)*2 + (공항 Onehot 배열 size)*2
     NN_size = len(airport_total) * 2
 
-    return flight_list, V_f_list, NN_size
+    return flight_list, V_f_list, NN_size, airport_total
     
 
 def embedFlightData_Stratified(path, interval=2):
@@ -288,4 +286,3 @@ def systematicSampling(data, interval):
     sampled_data = data.iloc[start_index::interval]
     
     return sampled_data
-
