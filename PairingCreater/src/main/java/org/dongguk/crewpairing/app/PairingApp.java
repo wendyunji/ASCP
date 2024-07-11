@@ -46,7 +46,6 @@ public class PairingApp extends CommonApp<PairingSolution> {
                     .findFirst().orElseGet(() -> null));
             business.getSolution().setPairingList(pairingList);
 
-            System.out.println(flightList);
             for(Flight f : flightList){
                 System.out.println(f);
             }
@@ -59,7 +58,6 @@ public class PairingApp extends CommonApp<PairingSolution> {
         PairingSolution solution = business.getSolution();
         System.out.println(solution);
 
-        solution.printScore();
         solution.calculateMandays();
 
         // Check score detail
