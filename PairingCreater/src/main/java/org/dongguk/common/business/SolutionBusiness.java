@@ -236,9 +236,11 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
                 }
             }
 
-            writeLog(logFilePath, "Deadhead Count: " + deadheadCnt + "  Mandays: " + mandayLen +
-                    ", Active Legs: " + includedFlightCount + ", Excluded Legs: " + filteredFlightCount
-                    +", DH Excluded Legs: " + arr[0] + ", newMandays: " + arr[1]);
+            writeLog(logFilePath, "Pairing: " + arr[0] + ",Deadhead Count: " + deadheadCnt + ", Mandays: " + mandayLen
+                    + ", Active Legs: " + includedFlightCount + ", Excluded Legs: " + filteredFlightCount
+                    + ", DH Excluded Legs: " + arr[1]
+                    + ", newPairing: " + (arr[0]-arr[1]) + ", newDeadhead Count: " + (deadheadCnt-arr[1]) + ", newMandays: " + arr[2]
+                    + ", newActive Legs: " + (includedFlightCount-arr[1]));
 
         }, 0, 240, TimeUnit.SECONDS);
     }
