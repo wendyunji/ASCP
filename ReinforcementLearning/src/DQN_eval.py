@@ -4,21 +4,22 @@ import collections
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim import lr_scheduler
 import numpy as np
-from torch.distributions import Categorical
-from embedData import *
-from utils import *
-from CrewPairingEnv import CrewPairingEnv
 import random
 import openpyxl
 from datetime import datetime
+import csv
+from embedData import readXlsx, embedFlightData
+from utils import checkConnection, get_reward, update_state
+from CrewPairingEnv import CrewPairingEnv
 
-#Hyperparameters
+# Hyperparameters
 learning_rate = 0.005
-gamma         = 0.98
-buffer_limit  = 50000
-batch_size    = 32
+gamma = 0.98
+buffer_limit = 50000
+batch_size = 32
+INF = 999999999999999
+
 
 class ReplayBuffer():
     def __init__(self):
@@ -76,17 +77,35 @@ def train(q, q_target, memory, optimizer):
         loss.backward()
         optimizer.step()
 
+def print_xlsx(output, output_pairing_filename):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+
+    # Pairing data 제목 추가
+    sheet.cell(row=1, column=1, value="Pairing data")
+
+    # 데이터를 엑셀에 쓰기
+    for row_index, row_data in enumerate(output, start=2):  # 첫 번째 행은 이미 Pairing data로 사용되었으므로 2부터 시작
+        # 각 행의 첫 열에는 1부터 시작하는 인덱스 추가
+        sheet.cell(row=row_index, column=1, value=row_index - 1)
+
+        # 나머지 데이터 추가
+        for col_index, value in enumerate(row_data, start=2):  # 각 행의 두 번째 열부터 시작
+            sheet.cell(row=row_index, column=col_index, value=value)
+
+    workbook.save(output_pairing_filename)
+
 def main():
-    # 사용자로부터 실행할 데이터의 년월일, 실행 ID 입력 받기
+    # 사용자로부터 실행할 데이터의 년월일, 에피소드 수, 실행 ID 입력 받기
     month = input("Enter the month of the input file (e.g., 201406): ")
-    episodes = int(input("Enter the number of saved model's episodes: "))
-    excutionId = input("Enter the excution ID of saved model (eg., 20240704-1): ")
-    
+    episodes = int(input("Enter the number of episodes to run: "))
+    excutionId = input("Enter the excution ID (eg., 20240704-1): ")
+
     current_directory = os.path.dirname(__file__)
     
     # 요구 디렉토리
-    models_directory = os.path.join(current_directory, '../models')
     eval_directory = os.path.join(current_directory, '../eval')
+    models_directory = os.path.join(current_directory, '../models')
     # 디렉토리가 없으면 만들기
     if not os.path.exists(eval_directory):
         os.makedirs(eval_directory)
@@ -96,12 +115,12 @@ def main():
     readXlsx(path, f'/ASCP_Data_Input_{month}.xlsx')
 
     # 데이터 임베딩
-    flight_list, V_f_list, NN_size = embedFlightData(path)
+    flight_list, V_f_list, NN_size, airport_total = embedFlightData(path)
     print('Data Imported')
+    print("Number of Flights :", len(flight_list))
 
     # Load Crew Pairing Environment
-    N_flight = len(flight_list)
-    env = CrewPairingEnv(V_f_list, flight_list)
+    env = CrewPairingEnv(V_f_list, flight_list, airport_total)
     q = Qnet(NN_size)
     
     # eval에 사용할 저장된 모델 불러오기
@@ -113,7 +132,7 @@ def main():
     score = 0
     output = []
 
-    s, _ = env.reset()  #V_p 출발공항, V_f 도착공항
+    s, _ = env.reset()  # V_p 출발공항, V_f 도착공항
     done = False
     
     while not done:
@@ -122,7 +141,7 @@ def main():
 
         s_prime, r, done, truncated, info, output = env.step(action=a)
 
-        s = s_prime     #action에 의해 바뀐 flight
+        s = s_prime     # action에 의해 바뀐 flight
         score += r
     
     print(f"score : {score:.2f}")

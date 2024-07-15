@@ -14,17 +14,19 @@ def checkConnection(V_p, V_f, homeindex):
     
     flight_gap = V_f[0] - V_p[1]
     
-    if V_p[4] == V_p[3]: 
-        return False  # 완성된 페어링
-    if V_f[1] - V_p[0] > 12 * 60: 
-        return False  # 페어링 길이 제약 -> 14시간으로 수정
-    if flight_gap < 0: 
-        return False  # 시간의 선후관계 제약
-    if V_p[4] != V_f[3]: 
-        return False  # 공간 제약
-    if V_p[5] != V_f[5]: 
-        return False  # 항공기 기종 제약
-    if V_p[2] + V_f[2] > 6 * 60: 
+    if V_p[4] == V_p[3]:  # 완성된 페어링
+        return False 
+    if V_f[1] - V_p[0] > 12 * 60: # 페어링 길이 제약 -> 12시간으로 수정
+        return False  
+    if flight_gap < 30: # 시간의 선후관계 제약 + 30 제약
+        return False  
+    if V_p[4] != V_f[3]:  # 공간 제약
+        return False 
+    if V_p[5] != V_f[5]: # 항공기 기종 제약
+        return False  
+    if V_p[2] + V_f[2] > 4 * 60: 
+        return False
+    if flight_gap >= 4* 60: # 최대 연결 시간 제약
         return False
 
     return True
