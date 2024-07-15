@@ -100,6 +100,7 @@ public class PairingSolution extends AbstractPersistable {
 
         int mandays = 0;
         int deactivated = 0;
+        int pairingSize = pairingList.size();
         for (int i = 0; i < pairingList.size(); i++) {
             List<Flight> pair = pairingList.get(i).getPair();
 
@@ -125,6 +126,6 @@ public class PairingSolution extends AbstractPersistable {
 
             else mandays += ChronoUnit.DAYS.between(pair.get(0).getOriginTime().toLocalDate(), pair.get(pair.size() - 1).getDestTime().toLocalDate()) + 1;
     }
-        return new int[] {deactivated, mandays};
+        return new int[] {pairingSize, deactivated, mandays};
     }
 }
