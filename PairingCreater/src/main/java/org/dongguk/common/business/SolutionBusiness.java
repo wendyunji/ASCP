@@ -10,6 +10,8 @@ import org.optaplanner.core.impl.score.director.InnerScoreDirector;
 import org.optaplanner.core.impl.solver.DefaultSolverFactory;
 import org.optaplanner.core.impl.solver.change.DefaultProblemChangeDirector;
 import org.optaplanner.persistence.common.api.domain.solution.SolutionFileIO;
+import org.dongguk.crewpairing.persistence.FlightCrewPairingXlsxFileIO;
+import org.dongguk.crewpairing.persistence.FlightCrewPairingXlsxFileIO.FlightCrewPairingXlsxWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -243,6 +245,19 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
                     + ", newActive Legs: " + (includedFlightCount-arr[1]));
 
         }, 0, 240, TimeUnit.SECONDS);
+
+        // 100분마다 페어링 데이터를 저장하는 작업
+        scheduler.scheduleAtFixedRate(() -> {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmm");
+            String timeStr = dateFormat.format(new Date());
+            exportPairingData(timeStr); // export 메서드 호출
+        }, 0, 1, TimeUnit.MINUTES);
+    }
+
+    // exportPairingData 메서드 정의
+    private void exportPairingData(String timeStr) {
+        FlightCrewPairingXlsxWriter writer = new FlightCrewPairingXlsxWriter((PairingSolution) getSolution());
+        writer.exportPairingData(timeStr);
     }
 
     private void writeLog(String logFilePath, String message) {

@@ -263,7 +263,7 @@ public class FlightCrewPairingXlsxFileIO extends AbstractXlsxSolutionFileIO<Pair
     }
 
         @Getter
-        private static class FlightCrewPairingXlsxWriter extends AbstractXlsxWriter<PairingSolution, HardSoftScore> {
+        public static class FlightCrewPairingXlsxWriter extends AbstractXlsxWriter<PairingSolution, HardSoftScore> {
 
             public FlightCrewPairingXlsxWriter(PairingSolution pairingSolution) {
                 super(pairingSolution, PairingApp.SOLVER_CONFIG);
@@ -293,7 +293,7 @@ public class FlightCrewPairingXlsxFileIO extends AbstractXlsxSolutionFileIO<Pair
                 scanner.close();
             }
 
-            private void exportPairingData(String timeStr) {
+            public void exportPairingData(String timeStr) {
                 String fileName = timeStr + "-pairingData.xlsx";
 
                 try (XSSFWorkbook workbook = new XSSFWorkbook()) {
