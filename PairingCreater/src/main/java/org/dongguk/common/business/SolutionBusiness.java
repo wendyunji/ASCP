@@ -251,7 +251,7 @@ public final class SolutionBusiness<Solution_, Score_ extends Score<Score_>> imp
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmm");
             String timeStr = dateFormat.format(new Date());
             exportPairingData(timeStr); // export 메서드 호출
-        }, 0, 1, TimeUnit.MINUTES);
+        }, 0, 100, TimeUnit.MINUTES);
     }
 
     // exportPairingData 메서드 정의
