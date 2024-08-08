@@ -27,9 +27,6 @@ public class Pairing extends AbstractPersistable {
     private static int restTime;
     private static int LayoverTime;
     private static int QuickTurnaroundTime;
-    private static int checkContinueTime = 60 * 4;
-    private static int continueMaxTime = 12 * 60;
-    private static int workMaxTime = 6 * 60;
 
     public static void setStaticTime(int briefingTime, int debriefingTime,
                                      int restTime, int LayoverTime, int QuickTurnaroundTime) {
@@ -38,7 +35,6 @@ public class Pairing extends AbstractPersistable {
         Pairing.restTime = restTime;
         Pairing.LayoverTime = LayoverTime + 2*60 ;      // brief와 debrief를 고려하기 위한 layover time 2시간 증가
         Pairing.QuickTurnaroundTime = QuickTurnaroundTime;
-//        Pairing.dutytimelist = new ArrayList<>();
     }
 
     @Builder
@@ -104,61 +100,67 @@ public class Pairing extends AbstractPersistable {
         }
         return false;
     }
+
+
     /*
-     * 듀티에 따른 휴식시간 더해서 반환
-     * / 듀티에 따른 강제 휴식시간 부여
-     * / 듀티가 6시간 미만 : 8시간
-     * / 듀티가 11시간 미만: 10시간
-     * / 이외 14시간
+     * 출발 시간을 기반으로 듀티 길이 제한
+     *  /  5시 ~ 14시: 14시간-2
+     *  / 14시 ~ 17시: 13시간-2
+     *  / 17시 ~ 5시:  12시간-2
      */
-    public int setRestTime(int totalTime){
-        int resttime =0;
-        if hour >= 5*60 and hour < 14*60:
-            resttime = 8*60;
-        else if hour >= 14*60 and hour < 17*60:
-            resttime = 10*60;
-        else:
-            resttime = 14*60;
-        return resttime;
-    }
+
+    /*
+     * 듀티 길이에 따른 최소 휴식시간
+     * / 듀티가 6시간 미만 : 8시간+2
+     * / 듀티가 11시간 미만: 10시간+2
+     * / 이외 14시간+2
+     */
+
     /**
      * 페어링의 최소 휴식시간 보장 여부 검증
      * / 쉬는 시간 포함  한 duty가 14시간 이상일 시 true 반환
      * / 또는 순수 비행 시간의 합이 8시간 이상일 시 true 반환
-     * @return boolean
+     * / @return boolean
      */
+
+    private static int checkContinueTime = 60 * 4;
+    private static int workMaxTime = 6 * 60;
+
     public boolean isImpossibleContinuity(){
         int totalTime = pair.get(0).getFlightTime(); // 비행과 쉬는 시간의 합
         int workTime = pair.get(0).getFlightTime(); // 비행 시간
-        int dutyTime = getDutyTime(pair.get(0).getOriginTime()); // 비행시간에 따른 duty 시간
-        boolean startDutyFlight = false;
-        int minBreakTime = checkContinueTime; // 최소 휴식시간
+        int startHour = pair.get(0).getOriginTime().getHour();
+
         for(int i=1; i<pair.size(); i++){
             int flightTime = pair.get(i).getFlightTime();
             int flightGap = getFlightGap(i - 1);
-            if (totalTime > dutyTime) return true;
-            if (startDutyFlight == true) {
-
-            }
             if(flightGap < QuickTurnaroundTime) return true;
 
             if(flightGap < checkContinueTime) {
-                minBreakTime = setRestTime(totalTime);
                 totalTime += flightTime + flightGap;
                 workTime += flightTime;
-                startDutyFlight = true;
             }
-            else {
-                if (flightGap > 8*60 + 2*60){ //8시간 쉬었으면 다음 비행 아니면 true
+            else {  // flight gap이 4시간 이상임
+                int minRestTime = (14+2)*60;
+                if(totalTime-2*60 < 6*60) minRestTime = (8+2)*60;
+                else if(totalTime-2*60 < 11*60) minRestTime = (10+2)*60;
+
+                if (flightGap > minRestTime){ //8시간 쉬었으면 다음 비행 아니면 true
                     totalTime = flightTime;
                     workTime = flightTime;
-                    dutyTime = getDutyTime(pair.get(i).getOriginTime());
+                    startHour = pair.get(i).getOriginTime().getHour();
                 }
                 else return true;
             }
-            if(totalTime > continueMaxTime) return true;
+
             if(workTime > workMaxTime) return true;
-            startDutyFlight = false;
+
+            int continueMaxTime = (12-2)*60;
+            if(startHour >= 5 && startHour < 14) continueMaxTime = (14-2)*60;
+            else if(startHour >= 14 && startHour < 17) continueMaxTime = (13-2)*60;
+
+            if(totalTime > continueMaxTime) return true;
+
         }
         return false;
     }
@@ -208,23 +210,6 @@ public class Pairing extends AbstractPersistable {
         }
         return (int) satisScore;
     }
-    /*
-     * 출발 시간을 기반으로 듀티 길이를 반환
-     *  /  5시 ~ 14시: 14시간
-     *  / 14시 ~ 17시: 13시간
-     *  / 17시 ~ 5시:  12시간
-     */
-    public Integer getDutyTime(LocalDateTime startDate){
-        int dutytime =0;
-        int hour = startDate.getHour();
-        if hour >= 5 and hour < 14:
-            dutytime = 14*60;
-        else if hour >= 14 and hour < 17:
-            dutytime = 13*60;
-        else:
-            dutytime = 12*60;
-        return dutytime;
-    }
 
     /**
      * 페어링의 총 길아 반환 (일)
@@ -248,11 +233,9 @@ public class Pairing extends AbstractPersistable {
         LocalDate endDate = endDestTime.toLocalDate();
 
         // Calculate the difference in days and add 1
-        long activeTimeCost = ChronoUnit.DAYS.between(startDate, endDate) + 1;
-
-        return (int) activeTimeCost;
+        return (int) Math.max(0, ChronoUnit.DAYS.between(startDate, endDate))+1;
     }
-}
+
 
     /**
      * 페어링이 4일을 넘는 지 반환 (Boolean)

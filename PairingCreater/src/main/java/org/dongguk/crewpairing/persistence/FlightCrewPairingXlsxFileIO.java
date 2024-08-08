@@ -453,6 +453,7 @@ public class FlightCrewPairingXlsxFileIO extends AbstractXlsxSolutionFileIO<Pair
                     XSSFSheet sheet = workbook.createSheet("Data");
 
                     List<Pairing> pairingList = solution.getPairingList();
+                    pairingList.removeIf(pairing -> pairing.getPair().isEmpty());
 
                     //셀 스타일 모음
                     CellStyle headerStyle = workbook.createCellStyle();
