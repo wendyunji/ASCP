@@ -1,0 +1,6 @@
+
+s	java:S135m"YReduce the total number of break and continue statements in this loop to use at most one.(¶¯ìñüÿÿÿÿ
+m
+java:S3776X"RRefactor this method to reduce its Cognitive Complexity from 29 to the 15 allowed.(ÄèÒøÿÿÿÿ
+U
+java:S1117Y"?Rename "pairingList" which hides the field declared at line 37.(Õ×‘
