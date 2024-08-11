@@ -101,6 +101,7 @@ public class PairingSolution extends AbstractPersistable {
         int mandays = 0;
         int deactivated = 0;
         int pairingSize = pairingList.size();
+        int deactDeadheads = 0;
         for (int i = 0; i < pairingList.size(); i++) {
             List<Flight> pair = pairingList.get(i).getPair();
 
@@ -112,7 +113,7 @@ public class PairingSolution extends AbstractPersistable {
                     Flight dhFlight = pair.get(pair.size() - 1);
                     Flight returnFlight = checkPair.get(checkPair.size() - 1);
 
-                    if (returnFlight.getOriginTime().isAfter(dhFlight.getDestTime())) continue;
+                    if (dhFlight.getDestTime().isAfter(returnFlight.getOriginTime())) continue;
                     if (ChronoUnit.DAYS.between(oriFlight.getOriginTime(), returnFlight.getDestTime()) > 4) continue;
                     if (!returnFlight.getOriginAirport().equals(dhFlight.getDestAirport())) continue;
                     if (!returnFlight.getDestAirport().equals(oriFlight.getOriginAirport())) continue;
@@ -121,11 +122,14 @@ public class PairingSolution extends AbstractPersistable {
                     dhComplete = true;
                     break;
                 }
-                if (!dhComplete) deactivated += 1;
+                if (!dhComplete) {
+                    deactivated += pair.size();
+                    deactDeadheads += 1;
+                }
             }
 
             else mandays += ChronoUnit.DAYS.between(pair.get(0).getOriginTime().toLocalDate(), pair.get(pair.size() - 1).getDestTime().toLocalDate()) + 1;
     }
-        return new int[] {pairingSize, deactivated, mandays};
+        return new int[] {pairingSize, deactivated, mandays, deactDeadheads};
     }
 }
