@@ -118,6 +118,11 @@ public class PairingSolution extends AbstractPersistable {
                     if (!returnFlight.getOriginAirport().equals(dhFlight.getDestAirport())) continue;
                     if (!returnFlight.getDestAirport().equals(oriFlight.getOriginAirport())) continue;
 
+                    Pairing dhPair = new Pairing();
+                    dhPair.setPair(new ArrayList<>(pair));
+                    dhPair.getPair().add(returnFlight);
+                    if(dhPair.isImpossibleContinuity()) continue;
+
                     mandays += ChronoUnit.DAYS.between(oriFlight.getOriginTime().toLocalDate(), returnFlight.getDestTime().toLocalDate()) + 1;
                     dhComplete = true;
                     break;

@@ -80,7 +80,7 @@ public class Pairing extends AbstractPersistable {
      * @return boolean
      */
     public boolean isNotDepartBaseMoreThanTwo() {
-        if (isNotDepartBase() && pair.size() > 2) {
+        if (isNotDepartBase() && pair.size() >= 2) {
             return true;
         }
         return false;
@@ -186,6 +186,7 @@ public class Pairing extends AbstractPersistable {
      * @return boolean
      */
     public boolean isDeadhead() {
+        if (isNotDepartBase()) return false;
         String startAirport = pair.get(0).getOriginAirport().getName();
         String endAirport = pair.get(pair.size() - 1).getDestAirport().getName();
 
@@ -223,6 +224,7 @@ public class Pairing extends AbstractPersistable {
 
     public Integer getActiveTimeCost() {
         if (pair.size() == 0) return 0;
+        if (isNotDepartBase()) return 0;
 
         // Get the start and end times
         LocalDateTime startOriginTime = pair.get(0).getOriginTime();
